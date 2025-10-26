@@ -1,0 +1,7 @@
+dataset:
+  path: ./dataset/fonts
+  exclusion: []
+  specs:
+    - path:
+        - ./test
+      language: fa

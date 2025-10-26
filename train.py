@@ -76,6 +76,13 @@ parser.add_argument(
     help="Datasets paths, seperated by space (default: ['./dataset/font_img'])",
 )
 parser.add_argument(
+    "--accelerator",
+    type=str,
+    choices=["cpu", "gpu"],
+    default="gpu",
+    help="Device accelerator to use (default: gpu)",
+)
+parser.add_argument(
     "-n",
     "--model-name",
     type=str,
@@ -114,11 +121,18 @@ args = parser.parse_args()
 
 torch.set_float32_matmul_precision(args.tensor_core)
 
-devices = args.devices
 single_batch_size = args.single_batch_size
 
 total_num_workers = os.cpu_count()
-single_device_num_workers = total_num_workers // len(devices)
+
+if args.accelerator == "cpu":
+    device_setting = 1
+    num_device = 1
+else:
+    device_setting = args.devices
+    num_device = len(args.devices)
+
+single_device_num_workers = total_num_workers // num_device
 
 config.INPUT_SIZE = args.size
 
@@ -139,8 +153,6 @@ num_warmup_epochs = 5
 num_epochs = 100
 
 log_every_n_steps = 100
-
-num_device = len(devices)
 
 data_module = FontDataModule(
     train_paths=[os.path.join(path, "train") for path in args.datasets],
@@ -172,8 +184,8 @@ strategy = "auto" if num_device == 1 else "ddp"
 trainer = ptl.Trainer(
     max_epochs=num_epochs,
     logger=logger_unconditioned,
-    devices=devices,
-    accelerator="gpu",
+    devices=device_setting,
+    accelerator=args.accelerator,
     enable_checkpointing=True,
     log_every_n_steps=log_every_n_steps,
     strategy=strategy,

@@ -1,6 +1,7 @@
 import torch
 from torch import nn, optim
 from torch.utils.data import TensorDataset, DataLoader
+import matplotlib.pyplot as plt
 
 
 def make_synthetic_data(n_samples: int = 100, noise_std: float = 0.5):
@@ -50,12 +51,38 @@ def main():
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
     print("Initial parameters:", {name: p.data.numpy().ravel().tolist() for name, p in model.named_parameters()})
-    train(model, dataloader, loss_fn, optimizer, epochs=5000)
+    train(model, dataloader, loss_fn, optimizer, epochs=500)
     print("Trained parameters:", {name: p.data.numpy().ravel().tolist() for name, p in model.named_parameters()})
     print(f"True slope: {true_slope}, True intercept: {true_intercept}")
 
-    # Example prediction
+    # Plot data and fitted line
     model.eval()
+    with torch.no_grad():
+        # Create a smooth x range for the fitted line
+        x_min, x_max = x.min().item(), x.max().item()
+        x_plot = torch.linspace(x_min, x_max, 200).unsqueeze(1)
+        y_plot = model(x_plot)
+
+        # Convert to numpy for matplotlib
+        x_np = x.numpy().ravel()
+        y_np = y.numpy().ravel()
+        x_plot_np = x_plot.numpy().ravel()
+        y_plot_np = y_plot.numpy().ravel()
+
+        plt.figure(figsize=(8, 6))
+        plt.scatter(x_np, y_np, alpha=0.6, label="Data")
+        plt.plot(x_plot_np, y_plot_np, color="red", linewidth=2, label="Fitted line")
+        # Optionally plot true underlying line
+        y_true_np = true_slope * x_plot_np + true_intercept
+        plt.plot(x_plot_np, y_true_np, color="green", linestyle="--", linewidth=1.5, label="True line")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.title("Data and learned linear model")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    # Example prediction
     with torch.no_grad():
         x_new = torch.tensor([[-4.0], [0.0], [4.0]])
         preds = model(x_new)

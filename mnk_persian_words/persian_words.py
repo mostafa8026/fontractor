@@ -1,11 +1,11 @@
 import random
 import sqlite3
+import io
 import zipfile
 import tempfile
 import os
+import pkgutil
 from typing import List
-import importlib.resources as importlib_resources
-import mnk_persian_words.data
 
 def extract_db():
     temp_dir = tempfile.gettempdir()
@@ -16,11 +16,11 @@ def extract_db():
         return extract_path
 
     # در غیر این صورت، فایل فشرده را استخراج کن
-    with importlib_resources.path(
-        mnk_persian_words.data, 'words.db.zip'
-    ) as zip_path:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extract('words.db', temp_dir)
+    data = pkgutil.get_data('mnk_persian_words.data', 'words.db.zip')
+    if data is None:
+        raise FileNotFoundError("Could not locate words.db.zip in mnk_persian_words.data")
+    with zipfile.ZipFile(io.BytesIO(data), 'r') as zip_ref:
+        zip_ref.extract('words.db', temp_dir)
     return extract_path
 
 def connect_db():

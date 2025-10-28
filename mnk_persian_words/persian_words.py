@@ -18,7 +18,11 @@ def extract_db():
     # در غیر این صورت، فایل فشرده را استخراج کن
     data = pkgutil.get_data('mnk_persian_words.data', 'words.db.zip')
     if data is None:
-        raise FileNotFoundError("Could not locate words.db.zip in mnk_persian_words.data")
+        fallback_path = os.path.join(os.path.dirname(__file__), 'data', 'words.db.zip')
+        if not os.path.exists(fallback_path):
+            raise FileNotFoundError("Could not locate words.db.zip in mnk_persian_words.data")
+        with open(fallback_path, 'rb') as f:
+            data = f.read()
     with zipfile.ZipFile(io.BytesIO(data), 'r') as zip_ref:
         zip_ref.extract('words.db', temp_dir)
     return extract_path

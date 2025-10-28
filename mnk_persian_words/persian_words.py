@@ -3,7 +3,8 @@ import sqlite3
 import zipfile
 import tempfile
 import os
-import importlib.resources as pkg_resources
+from typing import List
+import importlib.resources as importlib_resources
 import mnk_persian_words.data
 
 def extract_db():
@@ -15,8 +16,9 @@ def extract_db():
         return extract_path
 
     # در غیر این صورت، فایل فشرده را استخراج کن
-    resource = pkg_resources.files(mnk_persian_words.data).joinpath('words.db.zip')
-    with pkg_resources.as_file(resource) as zip_path:
+    with importlib_resources.path(
+        mnk_persian_words.data, 'words.db.zip'
+    ) as zip_path:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extract('words.db', temp_dir)
     return extract_path
@@ -29,7 +31,7 @@ def connect_db():
 
 words = []
 
-def load_words_from_db(db_path: str = "words.db", table_name: str = "words") -> list[str]:
+def load_words_from_db(db_path: str = "words.db", table_name: str = "words") -> List[str]:
     global words
     try:
         conn = connect_db()

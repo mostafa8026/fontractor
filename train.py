@@ -68,6 +68,13 @@ parser.add_argument(
     help="Learning rate (default: 0.0001)",
 )
 parser.add_argument(
+    "-e",
+    "--epochs",
+    type=int,
+    default=100,
+    help="Total number of training epochs (default: 100)",
+)
+parser.add_argument(
     "-s",
     "--datasets",
     nargs="*",
@@ -150,7 +157,7 @@ lambda_regression = 1.0
 regression_use_tanh = False
 
 num_warmup_epochs = 5
-num_epochs = 100
+num_epochs = args.epochs
 
 log_every_n_steps = 100
 

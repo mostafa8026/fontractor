@@ -123,14 +123,19 @@ parser.add_argument(
     action="store_true",
     help="Preserve aspect ratio (default: False)",
 )
+parser.add_argument(
+    "-w",
+    "--num-workers",
+    type=int,
+    default=None,
+    help="Number of dataloader workers per device (default: auto, capped to 4).",
+)
 
 args = parser.parse_args()
 
 torch.set_float32_matmul_precision(args.tensor_core)
 
 single_batch_size = args.single_batch_size
-
-total_num_workers = os.cpu_count()
 
 if args.accelerator == "cpu":
     device_setting = 1
@@ -139,7 +144,12 @@ else:
     device_setting = args.devices
     num_device = len(args.devices)
 
-single_device_num_workers = total_num_workers // num_device
+cpu_count = os.cpu_count() or 1
+if args.num_workers is not None:
+    single_device_num_workers = max(0, args.num_workers)
+else:
+    guessed_per_device = max(1, cpu_count // num_device)
+    single_device_num_workers = max(0, min(4, guessed_per_device))
 
 config.INPUT_SIZE = args.size
 try:
@@ -154,6 +164,10 @@ print(
     f"and cache '{os.environ.get('FONT_CACHE_PATH', 'font_list_cache.bin')}'."
 )
 print(f"[train] Detected {font_count} fonts (config.FONT_COUNT).")
+print(
+    f"[train] DataLoader workers per device: {single_device_num_workers} "
+    f"(detected {cpu_count} CPU cores)."
+)
 
 if os.name == "nt":
     single_device_num_workers = 0

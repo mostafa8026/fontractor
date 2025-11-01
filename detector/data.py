@@ -368,14 +368,22 @@ class FontDataModule(LightningDataModule):
         **kwargs,
     ):
         super().__init__()
-        self.dataloader_args = dict(kwargs)
-        num_workers = self.dataloader_args.get("num_workers", 0)
+        base_dataloader_args = dict(kwargs)
+        num_workers = base_dataloader_args.get("num_workers", 0)
+        pin_memory_default = torch.cuda.is_available()
         if num_workers > 0:
-            self.dataloader_args.setdefault("persistent_workers", True)
-            self.dataloader_args.setdefault(
+            self.train_dataloader_args = dict(base_dataloader_args)
+            self.train_dataloader_args.setdefault("persistent_workers", True)
+            self.train_dataloader_args.setdefault(
                 "prefetch_factor", min(4, max(2, num_workers))
             )
-            self.dataloader_args.setdefault("pin_memory", torch.cuda.is_available())
+            self.train_dataloader_args.setdefault("pin_memory", pin_memory_default)
+            self.eval_dataloader_args = dict(base_dataloader_args)
+            self.eval_dataloader_args.setdefault("persistent_workers", False)
+            self.eval_dataloader_args.setdefault("pin_memory", pin_memory_default)
+        else:
+            self.train_dataloader_args = dict(base_dataloader_args)
+            self.eval_dataloader_args = dict(base_dataloader_args)
         self.train_shuffle = train_shuffle
         self.val_shuffle = val_shuffle
         self.test_shuffle = test_shuffle
@@ -428,19 +436,19 @@ class FontDataModule(LightningDataModule):
         return DataLoader(
             self.train_dataset,
             shuffle=self.train_shuffle,
-            **self.dataloader_args,
+            **self.train_dataloader_args,
         )
 
     def val_dataloader(self):
         return DataLoader(
             self.val_dataset,
             shuffle=self.val_shuffle,
-            **self.dataloader_args,
+            **self.eval_dataloader_args,
         )
 
     def test_dataloader(self):
         return DataLoader(
             self.test_dataset,
             shuffle=self.test_shuffle,
-            **self.dataloader_args,
+            **self.eval_dataloader_args,
         )

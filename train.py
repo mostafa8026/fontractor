@@ -142,6 +142,18 @@ else:
 single_device_num_workers = total_num_workers // num_device
 
 config.INPUT_SIZE = args.size
+try:
+    font_count = config.refresh_font_count()
+except Exception as exc:
+    raise RuntimeError(
+        "Unable to determine FONT_COUNT from the dataset configuration."
+    ) from exc
+
+print(
+    f"[train] Using font config '{os.environ.get('FONT_CONFIG_PATH', 'configs/font.yml')}' "
+    f"and cache '{os.environ.get('FONT_CACHE_PATH', 'font_list_cache.bin')}'."
+)
+print(f"[train] Detected {font_count} fonts (config.FONT_COUNT).")
 
 if os.name == "nt":
     single_device_num_workers = 0

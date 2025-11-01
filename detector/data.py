@@ -368,7 +368,14 @@ class FontDataModule(LightningDataModule):
         **kwargs,
     ):
         super().__init__()
-        self.dataloader_args = kwargs
+        self.dataloader_args = dict(kwargs)
+        num_workers = self.dataloader_args.get("num_workers", 0)
+        if num_workers > 0:
+            self.dataloader_args.setdefault("persistent_workers", True)
+            self.dataloader_args.setdefault(
+                "prefetch_factor", min(4, max(2, num_workers))
+            )
+            self.dataloader_args.setdefault("pin_memory", torch.cuda.is_available())
         self.train_shuffle = train_shuffle
         self.val_shuffle = val_shuffle
         self.test_shuffle = test_shuffle

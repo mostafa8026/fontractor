@@ -369,6 +369,9 @@ class FontDataModule(LightningDataModule):
     ):
         super().__init__()
         base_dataloader_args = dict(kwargs)
+        if "batch_size" not in base_dataloader_args:
+            raise ValueError("FontDataModule requires 'batch_size' in dataloader args.")
+        self.batch_size = base_dataloader_args["batch_size"]
         num_workers = base_dataloader_args.get("num_workers", 0)
         pin_memory_default = torch.cuda.is_available()
         if num_workers > 0:
@@ -429,7 +432,7 @@ class FontDataModule(LightningDataModule):
 
     def get_train_num_iter(self, num_device: int) -> int:
         return math.ceil(
-            len(self.train_dataset) / (self.dataloader_args["batch_size"] * num_device)
+            len(self.train_dataset) / (self.batch_size * num_device)
         )
 
     def train_dataloader(self):
